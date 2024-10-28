@@ -1,0 +1,52 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # MySQL Database Service
+  db:
+    image: mysql:8.0
+    container_name: ecommerce_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - backend_network
+
+  # Spring Boot Backend Service
+  app_backend:
+    build:
+      context: ../ecommerce_backend
+      dockerfile: Dockerfile_dev
+    container_name: ecommerce_backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../ecommerce_backend:/app
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    networks:
+      - backend_network
+      - frontend_network
+
+# Define named volumes for persistence
+volumes:
+  mysql_data:
+
+# Define networks for service isolation
+networks:
+  backend_network:
+    driver: bridge
+  frontend_network:
+    driver: bridge
