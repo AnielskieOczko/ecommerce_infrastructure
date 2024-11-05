@@ -3,11 +3,12 @@ version: '3.8'
 
 services:
   # MySQL Database Service
-  db:
+  mysql:
     image: mysql:8.0
-    container_name: ecommerce_db
+    container_name: ecommerce_db_dev
     restart: unless-stopped
     environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_ACTIVE_PROFILE}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USERNAME}
@@ -31,11 +32,14 @@ services:
     volumes:
       - ../ecommerce_backend:/app
     depends_on:
-      - db
+      - mysql
     environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_ACTIVE_PROFILE}
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
     networks:
       - backend_network
       - frontend_network
@@ -43,7 +47,7 @@ services:
 # Define named volumes for persistence
 volumes:
   mysql_data:
-
+  
 # Define networks for service isolation
 networks:
   backend_network:
