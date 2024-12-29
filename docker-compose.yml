@@ -1,5 +1,5 @@
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 
 services:
   # MySQL Database Service
@@ -31,6 +31,7 @@ services:
       - "8080:8080"
     volumes:
       - ../ecommerce_backend:/app
+      - product_images:/app/product-images
     depends_on:
       - mysql
     environment:
@@ -40,14 +41,42 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
+      STORAGE_LOCATION: ${STORAGE_LOCATION}
+      STORAGE_BASE_URL: ${STORAGE_BASE_URL}
+      STORAGE_CLEANUP_SCHEDULE: ${STORAGE_CLEANUP_SCHEDULE}
+      STORAGE_MAX_FILE_SIZE: ${STORAGE_MAX_FILE_SIZE}
+      STORAGE_SECRET_SALT: ${STORAGE_SECRET_SALT}
     networks:
       - backend_network
+      - frontend_network
+
+  app_frontend:
+    build:
+      context: ../ecommerce_frontend/
+      dockerfile: Dockerfile_dev
+    container_name: ecommerce_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../ecommerce_frontend/:/app
+      - /app/node_modules
+    depends_on:
+      - app_backend
+    environment:
+      - HOST=0.0.0.0
+      # - REACT_APP_API_URL=http://app_backend:8080
+      - REACT_APP_API_URL=http://localhost:8080
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    networks:
       - frontend_network
 
 # Define named volumes for persistence
 volumes:
   mysql_data:
-  
+  product_images:
+
 # Define networks for service isolation
 networks:
   backend_network:
