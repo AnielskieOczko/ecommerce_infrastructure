@@ -29,6 +29,7 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
+      - "5005:5005"
     volumes:
       - ../ecommerce_backend:/app
       - product_images:/app/product-images
@@ -46,6 +47,7 @@ services:
       STORAGE_CLEANUP_SCHEDULE: ${STORAGE_CLEANUP_SCHEDULE}
       STORAGE_MAX_FILE_SIZE: ${STORAGE_MAX_FILE_SIZE}
       STORAGE_SECRET_SALT: ${STORAGE_SECRET_SALT}
+      JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 # Enable remote debugging
     networks:
       - backend_network
       - frontend_network
