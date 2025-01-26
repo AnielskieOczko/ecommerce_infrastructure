@@ -74,6 +74,47 @@ services:
     networks:
       - frontend_network
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-admin}
+    networks:
+      - backend_network
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - backend_network
+
+  app_email_service:
+    build:
+      context: ../ecommerce-email-service
+      dockerfile: Dockerfile_dev
+    container_name: ecommerce_email_service
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_MAIL_HOST: mailhog
+      SPRING_MAIL_PORT: 1025
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+      - mailhog
+    networks:
+      - backend_network
+    ports:
+      - "8081:8080"
+      - "5006:5005" # Debug port (first port is local port, second port is container port REMEMBER THIS !!)
+
 # Define named volumes for persistence
 volumes:
   mysql_data:
