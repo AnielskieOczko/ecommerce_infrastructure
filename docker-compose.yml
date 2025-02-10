@@ -48,9 +48,14 @@ services:
       STORAGE_MAX_FILE_SIZE: ${STORAGE_MAX_FILE_SIZE}
       STORAGE_SECRET_SALT: ${STORAGE_SECRET_SALT}
       JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 # Enable remote debugging
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
     networks:
       - backend_network
       - frontend_network
+    profiles:
+      - "container"
 
   app_frontend:
     build:
@@ -73,6 +78,8 @@ services:
       - WATCHPACK_POLLING=true
     networks:
       - frontend_network
+    profiles:
+      - container
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -103,6 +110,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
       SPRING_MAIL_HOST: mailhog
       SPRING_MAIL_PORT: 1025
     restart: unless-stopped
@@ -114,7 +123,60 @@ services:
     ports:
       - "8081:8080"
       - "5006:5005" # Debug port (first port is local port, second port is container port REMEMBER THIS !!)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus-local
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.local.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    restart: always
+    networks:
+      - backend_network
+    profiles:
+      - local
+  prometheus-containerized: # NEW Prometheus service for containerized app profile
+    image: prom/prometheus:latest
+    container_name: prometheus-container
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus.containerized.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    restart: always
+    networks:
+      - backend_network
+    profiles:
+      - container # Activated only with 'containerized-app' profile
 
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-local
+    ports:
+      - "3030:3000"
+    depends_on:
+      - prometheus
+    restart: always
+    networks:
+      - backend_network
+    profiles:
+      - local
+
+  grafana-containerized:
+    image: grafana/grafana:latest
+    container_name: grafana-container
+    ports:
+      - "3030:3000"
+    depends_on:
+      - prometheus-containerized
+    restart: always
+    networks:
+      - backend_network
+    profiles:
+      - container
 # Define named volumes for persistence
 volumes:
   mysql_data:
