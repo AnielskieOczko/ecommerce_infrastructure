@@ -1,3 +1,8 @@
 .idea
 .env
 docker-compose-backup.yml
+
+# Prometheus security files
+prometheus/config/web-config.yml
+prometheus/certs/*.crt
+prometheus/certs/*.key

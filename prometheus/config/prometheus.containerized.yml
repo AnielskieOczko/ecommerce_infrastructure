@@ -1,0 +1,11 @@
+scrape_configs:
+  - job_name: "spring-boot-app"
+    scrape_interval: 15s
+    metrics_path: /actuator/prometheus
+    basic_auth:
+      username: "admin"
+      password: "${SPRING_BOOT_APP_PASSWORD}"
+    static_configs:
+      # - targets: ["app_backend:8080"] # Target for containerized app
+      - targets: ["host.docker.internal:8080"] # Target for local app
+
