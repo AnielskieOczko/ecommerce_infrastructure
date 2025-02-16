@@ -126,12 +126,20 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus-local
+    environment:
+      - SPRING_BOOT_APP_PASSWORD_PROMETHEUS=${SPRING_BOOT_APP_PASSWORD_PROMETHEUS}
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.local.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/config/prometheus.containerized.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/config/web-config.yml:/etc/prometheus/web-config.yml:ro
+      - ./prometheus/certs:/etc/prometheus/certs:ro
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--web.config.file=/etc/prometheus/web-config.yml"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.listen-address=:9090"
+    user: "nobody:nobody" # Run as non-root user
     restart: always
     networks:
       - backend_network
@@ -140,12 +148,20 @@ services:
   prometheus-containerized: # NEW Prometheus service for containerized app profile
     image: prom/prometheus:latest
     container_name: prometheus-container
+    environment:
+      - SPRING_BOOT_APP_PASSWORD_PROMETHEUS=${SPRING_BOOT_APP_PASSWORD_PROMETHEUS}
     ports:
-      - "9091:9090"
+      - "9090:9090"
     volumes:
-      - ./prometheus.containerized.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/config/prometheus.containerized.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/config/web-config.yml:/etc/prometheus/web-config.yml:ro
+      - ./prometheus/certs:/etc/prometheus/certs:ro
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--web.config.file=/etc/prometheus/web-config.yml"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.listen-address=:9090"
+    user: "nobody:nobody" # Run as non-root user
     restart: always
     networks:
       - backend_network
@@ -157,6 +173,11 @@ services:
     container_name: grafana-local
     ports:
       - "3030:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_SERVER_ROOT_URL=http://localhost:3030
+    volumes:
+      - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
     restart: always
@@ -170,6 +191,11 @@ services:
     container_name: grafana-container
     ports:
       - "3030:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_SERVER_ROOT_URL=http://localhost:3030
+    volumes:
+      - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus-containerized
     restart: always
@@ -181,6 +207,7 @@ services:
 volumes:
   mysql_data:
   product_images:
+  grafana_data:
 
 # Define networks for service isolation
 networks:
