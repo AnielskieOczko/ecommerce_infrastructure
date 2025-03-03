@@ -51,6 +51,7 @@ services:
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      PAYMENT_SERVICE_URL=http: ${PAYMENT_SERVICE_URL}
     networks:
       - backend_network
       - frontend_network
@@ -123,6 +124,22 @@ services:
     ports:
       - "8081:8080"
       - "5006:5005" # Debug port (first port is local port, second port is container port REMEMBER THIS !!)
+
+  app_payment_service:
+    build:
+      context: ../ecommerce-payment-service
+      dockerfile: Dockerfile_dev
+    container_name: ecommerce_payment_service
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+    restart: unless-stopped
+    networks:
+      - backend_network
+    ports:
+      - 8010:8010
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus-local
