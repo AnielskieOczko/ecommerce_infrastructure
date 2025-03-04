@@ -6,3 +6,6 @@ docker-compose-backup.yml
 prometheus/config/web-config.yml
 prometheus/certs/*.crt
 prometheus/certs/*.key
+
+# Augment ignore file
+.augmentignore
