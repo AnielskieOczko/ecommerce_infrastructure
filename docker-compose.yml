@@ -2,6 +2,25 @@
 # version: "3.8"
 
 services:
+  # PostgreSQL Database Service
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: ai_db_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME_AI_AGENT}
+      POSTGRES_PASSWORD: ${DB_PASSWORD_AI_AGENT}
+      POSTGRES_DB: ${DB_NAME_AI_AGENT}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend_network
+    profiles:
+      - container
+      - local
+
   # MySQL Database Service
   mysql:
     image: mysql:8.0
@@ -19,6 +38,9 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - backend_network
+    profiles:
+      - container
+      - local
 
   # Spring Boot Backend Service
   app_backend:
@@ -69,18 +91,20 @@ services:
     volumes:
       - ../ecommerce_frontend/:/app
       - /app/node_modules
-    depends_on:
-      - app_backend
+    # depends_on:
+    #   - app_backend
     environment:
       - HOST=0.0.0.0
       # - REACT_APP_API_URL=http://app_backend:8080
       - REACT_APP_API_URL=http://localhost:8080
+      - REACT_APP_STRIPE_PUBLIC_KEY=${STRIPE_PUBLISHABLE_KEY}
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
     networks:
       - frontend_network
     profiles:
       - container
+      - local
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -124,6 +148,8 @@ services:
     ports:
       - "8081:8080"
       - "5006:5005" # Debug port (first port is local port, second port is container port REMEMBER THIS !!)
+    profiles:
+      - container
 
   app_payment_service:
     build:
@@ -139,6 +165,8 @@ services:
       - backend_network
     ports:
       - 8010:8010
+    profiles:
+      - container
 
   prometheus:
     image: prom/prometheus:latest
@@ -222,6 +250,7 @@ services:
       - container
 # Define named volumes for persistence
 volumes:
+  postgres_data:
   mysql_data:
   product_images:
   grafana_data:
